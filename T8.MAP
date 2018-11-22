@@ -1,7 +1,7 @@
 
  Start  Stop   Length Name               Class
 
- 00000H 0016CH 0016DH CODIGO             
+ 00000H 001D5H 001D6H CODIGO             
 
 Program entry point at 0000:0100
 Warning: no stack

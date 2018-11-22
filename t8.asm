@@ -13,7 +13,6 @@ codigo segment
      org  100h           ;Dejar las 100h primeras posiciones
 
 main:
-     ;mov pos_x, 1
      mov  ax,PANTALLA
      mov  es,ax
      mov  di,79
@@ -23,17 +22,67 @@ main:
      jmp instalar_reloj        ;Bifurcar a la rutina de instalacion
 
 reloj proc far
-     push ax es di       ;Guardamos los registros en la pila
+     push ax es di cx bx      ;Guardamos los registros en la pila
      mov  al,0Ch         ;
      out  70h,al         ;
      in   al,71h         ;Leer el RTC
-
+    
 ;pintar
      mov  ax,PANTALLA
      mov  es,ax
-     mov  di,79*2
-     mov  ax,es:[di]     ;Guardamos en AX lo que hay en la esquina
-     inc  al             ;Pasamos al siguiente caracter
+     mov  di,72*2
+     ;Hour Part
+    HOUR:
+    MOV AH,2CH    ; To get System Time
+    INT 21H
+    MOV AL,CH     ; Hour is in CH
+    AAM
+    MOV BX,AX
+    mov ah,7                ; reinicio en cero
+     mov al, bh
+     add al,30H     ; ASCII Adjustment
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     add di,2
+     mov al, bl
+     add al,30H     ; ASCII Adjustment
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     mov al,':'
+     add di,2
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     add di,2
+     MINUTES:
+    MOV AH,2CH    ; To get System Time
+    INT 21H
+    MOV AL,CL     ; Minutes is in CL
+    AAM
+    MOV BX,AX
+    mov ah,7                ; reinicio en cero
+     mov al, bh
+     add al,30H     ; ASCII Adjustment
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     add di,2
+     mov al, bl
+     add al,30H     ; ASCII Adjustment
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     mov al,':'
+     add di,2
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     add di,2
+   
+    ;Seconds Part
+    Seconds:
+    MOV AH,2CH    ; To get System Time
+    INT 21H
+    MOV AL,DH     ; Seconds is in DH
+    AAM
+    MOV BX,AX
+    mov ah,7                ; reinicio en cero
+    mov al, bh
+     add al,30H     ; ASCII Adjustment
+     mov  es:[di],ax     ;Lo mostramos por pantalla
+     add di,2
+     mov al, bl
+     add al,30H     ; ASCII Adjustment
      mov  es:[di],ax     ;Lo mostramos por pantalla
 ; termino de pintar
      cli                 ;Inhabilitar las interrupciones
@@ -41,17 +90,17 @@ reloj proc far
      out  20h,al
      out  0A0h,al
      sti                 ;Habilitar las interrupciones
-     pop di es ax             ;Recuperar los registros
+     pop bx cx di es ax             ;Recuperar los registros
      iret
 reloj endp
 
 instalar_reloj proc far
 
-     cli                 ;Inhabilitar las interrupciones
-     xor  ax,ax          ;
-     mov  es,ax          ;Poner a 0 ES
+     cli                             ;Inhabilitar las interrupciones
+     xor  ax,ax                      ;
+     mov  es,ax                      ;Poner a 0 ES
      mov es:[70h*4],offset reloj     ;Guardar el offset
-     mov es:[70h*4+2],cs              ;y el segmento de la rutina
+     mov es:[70h*4+2],cs             ;y el segmento de la rutina
 
      in   al,0A1h        ;Leer el PIC esclavo
      and  al,11111110b   ;
@@ -74,7 +123,6 @@ instalar_reloj proc far
      sti                 ;Habilitar las interrupciones
      lea dx,instalar_reloj
      int  27h
-
 instalar_reloj endp
 codigo ends
      end main
